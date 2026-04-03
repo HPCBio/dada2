@@ -14,24 +14,25 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.os }}
 
-    name: Check (${{ matrix.os }}, Bioc ${{ matrix.bioc-version }})
+    name: Check (${{ matrix.os }}, ${{ matrix.r-version }})
 
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        bioc-version: [release]
+        r-version: [bioc-release]
         include:
           - os: ubuntu-latest
-            bioc-version: devel
+            r-version: bioc-devel
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up R and Bioconductor
-        uses: bioconductor/bioc-actions/setup-bioc@v1
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
         with:
-          bioc-version: ${{ matrix.bioc-version }}
+          r-version: ${{ matrix.r-version }}
+          use-public-rspm: true
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -41,12 +42,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-bioc${{ matrix.bioc-version }}-${{ hashFiles('DESCRIPTION') }}
+          key: ${{ runner.os }}-${{ matrix.r-version }}-${{ hashFiles('DESCRIPTION') }}
           restore-keys: |
-            ${{ runner.os }}-bioc${{ matrix.bioc-version }}-
+            ${{ runner.os }}-${{ matrix.r-version }}-
 
-      - name: Install package dependencies
+      - name: Install BiocManager and package dependencies
         run: |
+          install.packages("BiocManager")
           BiocManager::install(c(
             "Rcpp", "RcppParallel",
             "Biostrings", "ShortRead", "IRanges", "XVector", "BiocGenerics",
@@ -70,6 +72,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: check-results-${{ matrix.os }}-bioc${{ matrix.bioc-version }}
+          name: check-results-${{ matrix.os }}-${{ matrix.r-version }}
           path: check
           retention-days: 7
