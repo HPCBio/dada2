@@ -1,0 +1,75 @@
+name: R CMD Check
+
+on:
+  push:
+    branches: [master, main, github-actions]
+  pull_request:
+    branches: [master, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.os }}
+
+    name: Check (${{ matrix.os }}, Bioc ${{ matrix.bioc-version }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        bioc-version: [release]
+        include:
+          - os: ubuntu-latest
+            bioc-version: devel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up R and Bioconductor
+        uses: bioconductor/bioc-actions/setup-bioc@v1
+        with:
+          bioc-version: ${{ matrix.bioc-version }}
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-bioc${{ matrix.bioc-version }}-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: |
+            ${{ runner.os }}-bioc${{ matrix.bioc-version }}-
+
+      - name: Install package dependencies
+        run: |
+          BiocManager::install(c(
+            "Rcpp", "RcppParallel",
+            "Biostrings", "ShortRead", "IRanges", "XVector", "BiocGenerics",
+            "ggplot2", "reshape2",
+            "BiocStyle", "knitr", "rmarkdown",
+            "testthat",
+            "rcmdcheck"
+          ), ask = FALSE, update = FALSE)
+        shell: Rscript {0}
+
+      - name: Run R CMD check
+        run: |
+          rcmdcheck::rcmdcheck(
+            args = c("--no-manual", "--no-vignettes", "--timings", "--as-cran"),
+            error_on = "error",
+            check_dir = "check"
+          )
+        shell: Rscript {0}
+
+      - name: Upload check results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-results-${{ matrix.os }}-bioc${{ matrix.bioc-version }}
+          path: check
+          retention-days: 7
