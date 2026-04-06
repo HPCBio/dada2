@@ -21,9 +21,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         r-version: [release]
-        include:
-          - os: ubuntu-latest
-            r-version: devel
+        # include:
+        #   - os: ubuntu-latest
+        #     r-version: devel
 
     steps:
       - uses: actions/checkout@v4
