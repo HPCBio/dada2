@@ -31,8 +31,7 @@ test_that("derepFastq processes multiple files and returns a list", {
   expect_true(is.list(dereps))
   expect_equal(length(dereps), length(test_fnF))
   for (i in seq_along(dereps)) {
-    expect_s4_class(dereps[[i]], "derep",
-                    label = sprintf("element %d is a derep object", i))
+    expect_s4_class(dereps[[i]], "derep")
     expect_true(length(dereps[[i]]$uniques) > 0,
                 label = sprintf("element %d has unique sequences", i))
   }
