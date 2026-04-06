@@ -75,8 +75,8 @@ test_that("full paired-end pipeline produces a non-chimeric sequence table", {
   errF <- learnErrors(filtF, multithread = FALSE, verbose = FALSE)
   errR <- learnErrors(filtR, multithread = FALSE, verbose = FALSE)
 
-  expect_equal(nrow(errF), 16L, label = "Step 3: forward error matrix has 16 rows")
-  expect_equal(nrow(errR), 16L, label = "Step 3: reverse error matrix has 16 rows")
+  expect_equal(nrow(errF$err_out), 16L, label = "Step 3: forward error matrix has 16 rows")
+  expect_equal(nrow(errR$err_out), 16L, label = "Step 3: reverse error matrix has 16 rows")
 
   # ── Step 4: Sample inference ──────────────────────────────────────────────
   # INPUT DATA: derep objects from Step 2; error matrices from Step 3
